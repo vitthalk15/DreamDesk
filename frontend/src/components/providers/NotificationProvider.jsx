@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Toaster } from '../ui/sonner'
 
@@ -33,7 +33,7 @@ export const NotificationProvider = ({ children }) => {
     localStorage.setItem('actionHistory', JSON.stringify(actionHistory))
   }, [actionHistory])
 
-  const addNotification = (message, type = 'info', duration = 5000, actionId = null) => {
+  const addNotification = useCallback((message, type = 'info', duration = 5000, actionId = null) => {
     const id = Date.now()
     const notification = {
       id,
@@ -49,30 +49,30 @@ export const NotificationProvider = ({ children }) => {
     setTimeout(() => {
       removeNotification(id)
     }, duration)
-  }
+  }, [])
 
-  const removeNotification = (id) => {
+  const removeNotification = useCallback((id) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id))
-  }
+  }, [])
 
-  const clearAllNotifications = () => {
+  const clearAllNotifications = useCallback(() => {
     setNotifications([])
-  }
+  }, [])
 
-  const clearAllActions = () => {
+  const clearAllActions = useCallback(() => {
     setActionHistory([])
-  }
+  }, [])
 
-  const markActionAsRead = (actionId) => {
+  const markActionAsRead = useCallback((actionId) => {
     setActionHistory(prev => 
       prev.map(action => 
         action.id === actionId ? { ...action, read: true } : action
       )
     )
-  }
+  }, [])
 
   // Enhanced action tracking with better categorization
-  const trackAction = (actionType, additionalData = {}) => {
+  const trackAction = useCallback((actionType, additionalData = {}) => {
     const actionId = Date.now().toString()
     const timestamp = new Date().toISOString()
     
@@ -296,77 +296,77 @@ export const NotificationProvider = ({ children }) => {
         }
     }
 
-    setActionHistory(prev => [action, ...prev.slice(0, 49)]) // Keep only last 50 actions
+    setActionHistory(prev => [...prev, action])
     return actionId
-  }
+  }, [])
 
-  const showSuccess = (message, action = null, additionalData = {}) => {
-    const actionId = action ? trackAction(action, additionalData) : null
+  const showSuccess = useCallback((message, action = null, additionalData = {}) => {
     toast.success(message)
-    addNotification(message, 'success', 5000, actionId)
-  }
+    if (action) {
+      trackAction(action, additionalData)
+    }
+  }, [trackAction])
 
-  const showError = (message, action = null, additionalData = {}) => {
-    const actionId = action ? trackAction(action, additionalData) : null
+  const showError = useCallback((message, action = null, additionalData = {}) => {
     toast.error(message)
-    addNotification(message, 'error', 7000, actionId)
-  }
+    if (action) {
+      trackAction(action, additionalData)
+    }
+  }, [trackAction])
 
-  const showInfo = (message, action = null, additionalData = {}) => {
-    const actionId = action ? trackAction(action, additionalData) : null
+  const showInfo = useCallback((message, action = null, additionalData = {}) => {
     toast.info(message)
-    addNotification(message, 'info', 5000, actionId)
-  }
+    if (action) {
+      trackAction(action, additionalData)
+    }
+  }, [trackAction])
 
-  const showWarning = (message, action = null, additionalData = {}) => {
-    const actionId = action ? trackAction(action, additionalData) : null
+  const showWarning = useCallback((message, action = null, additionalData = {}) => {
     toast.warning(message)
-    addNotification(message, 'warning', 6000, actionId)
-  }
+    if (action) {
+      trackAction(action, additionalData)
+    }
+  }, [trackAction])
 
-  // Get unread notifications count
-  const getUnreadCount = () => {
+  const getUnreadCount = useCallback(() => {
     return actionHistory.filter(action => !action.read).length
-  }
+  }, [actionHistory])
 
-  // Get recent actions for notification panel
-  const getRecentActions = (limit = 10) => {
-    return actionHistory.slice(0, limit)
-  }
+  const getRecentActions = useCallback((limit = 10) => {
+    return actionHistory.slice(-limit).reverse()
+  }, [actionHistory])
 
-  // Get actions by category
-  const getActionsByCategory = (category) => {
+  const getActionsByCategory = useCallback((category) => {
     return actionHistory.filter(action => action.category === category)
-  }
+  }, [actionHistory])
 
-  // Mark all actions as read
-  const markAllAsRead = () => {
-    setActionHistory(prev => 
-      prev.map(action => ({ ...action, read: true }))
-    )
+  const markAllAsRead = useCallback(() => {
+    setActionHistory(prev => prev.map(action => ({ ...action, read: true })))
+  }, [])
+
+  const value = {
+    notifications,
+    actionHistory,
+    addNotification,
+    removeNotification,
+    clearAllNotifications,
+    clearAllActions,
+    markActionAsRead,
+    trackAction,
+    showSuccess,
+    showError,
+    showInfo,
+    showWarning,
+    getUnreadCount,
+    getRecentActions,
+    getActionsByCategory,
+    markAllAsRead
   }
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      actionHistory,
-      addNotification,
-      removeNotification,
-      markActionAsRead,
-      markAllAsRead,
-      clearAllNotifications,
-      clearAllActions,
-      showSuccess,
-      showError,
-      showInfo,
-      showWarning,
-      getUnreadCount,
-      getRecentActions,
-      getActionsByCategory,
-      trackAction
-    }}>
+    <NotificationContext.Provider value={value}>
       {children}
-      <Toaster />
+      <Toaster position="top-right" />
     </NotificationContext.Provider>
   )
 } 

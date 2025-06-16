@@ -33,6 +33,7 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:3000',
+        'http://localhost:4001',
         'https://dream-desk.vercel.app',
         'https://dreamdesk.vercel.app'
     ],
@@ -44,7 +45,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4001;
 
 
 // api's
