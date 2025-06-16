@@ -5,6 +5,10 @@
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 export const USER_API_END_POINT = `${BACKEND_URL}/api/v1/user`;
 export const JOB_API_END_POINT = `${BACKEND_URL}/api/v1/job`;
 export const APPLICATION_API_END_POINT = `${BACKEND_URL}/api/v1/application`;
