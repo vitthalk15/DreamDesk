@@ -16,9 +16,9 @@ const useGetAllJobs = (keyword = "") => {
             try {
                 setLoading(true);
                 setError(null);
-                console.log('Fetching jobs from:', `http://localhost:4001/api/v1/job/get?keyword=${keyword}`);
+                console.log('Fetching jobs from:', `${JOB_API_END_POINT}/get?keyword=${keyword}`);
                 
-                const response = await axios.get(`http://localhost:4001/api/v1/job/get?keyword=${keyword}`, {
+                const response = await axios.get(`${JOB_API_END_POINT}/get?keyword=${keyword}`, {
                     withCredentials: true,
                     headers: {
                         'Content-Type': 'application/json',
