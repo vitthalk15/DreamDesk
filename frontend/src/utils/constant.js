@@ -5,7 +5,7 @@ import axios from 'axios';
 // export const APPLICATION_API_END_POINT="http://localhost:5000/api/v1/application";
 // export const COMPANY_API_END_POINT="http://localhost:5000/api/v1/company";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
+const BACKEND_URL = "https://dreamdesk-93vh.onrender.com";
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;

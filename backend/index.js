@@ -35,7 +35,9 @@ const corsOptions = {
         'http://localhost:3000',
         'http://localhost:4001',
         'https://dream-desk.vercel.app',
-        'https://dreamdesk.vercel.app'
+        'https://dreamdesk.vercel.app',
+        'https://dreamdesk-93vh.onrender.com',
+        'https://dreamdesk-frontend.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
