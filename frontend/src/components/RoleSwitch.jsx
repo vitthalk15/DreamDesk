@@ -30,7 +30,6 @@ const RoleSwitch = () => {
 
         try {
             setLoading(true);
-            console.log('Attempting role switch with role:', selectedRole);
             const res = await axios.post(`${USER_API_END_POINT}/role/switch`, {
                 newRole: selectedRole
             }, {
@@ -51,12 +50,7 @@ const RoleSwitch = () => {
                 setSelectedRole(null);
             }
         } catch (error) {
-            console.error('Role switch error details:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                headers: error.response?.headers
-            });
+            console.error('Role switch error:', error);
             showError(
                 error.response?.data?.message || 'Failed to switch role. Please try again.',
                 'role_switch_error'

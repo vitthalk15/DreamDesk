@@ -5,46 +5,11 @@ import axios from 'axios';
 // export const APPLICATION_API_END_POINT="http://localhost:5000/api/v1/application";
 // export const COMPANY_API_END_POINT="http://localhost:5000/api/v1/company";
 
-const BACKEND_URL = "https://dreamdesk-93vh.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
-axios.defaults.headers.common['Accept'] = 'application/json';
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-// Add request interceptor to include credentials
-axios.interceptors.request.use(
-    config => {
-        // Get token from cookie if available
-        const token = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('token='))
-            ?.split('=')[1];
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    error => {
-        return Promise.reject(error);
-    }
-);
-
-// Add response interceptor to handle errors
-axios.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized error
-            console.error('Authentication error:', error.response?.data);
-            // Optionally redirect to login page
-            // window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
 
 export const USER_API_END_POINT = `${BACKEND_URL}/api/v1/user`;
 export const JOB_API_END_POINT = `${BACKEND_URL}/api/v1/job`;

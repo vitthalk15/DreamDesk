@@ -124,19 +124,10 @@ export const login = async (req, res) => {
             })
         };
 
-        const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
-            expiresIn: '7d'
-        });
-
-        // Set cookie with domain
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            domain: '.onrender.com', // Allow sharing between subdomains
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        const tokenData = {
+            userId: user._id
+        }
+        const token = await jwt.sign(tokenData, process.env.SECRET_KEY, { expiresIn: '1d' });
 
         user = {
             _id: user._id,
@@ -147,7 +138,12 @@ export const login = async (req, res) => {
             profile: user.profile
         }
 
-        return res.status(200).json({
+        return res.status(200).cookie("token", token, { 
+            maxAge: 1 * 24 * 60 * 60 * 1000, 
+            httpOnly: true, 
+            sameSite: 'none',
+            secure: true
+        }).json({
             message: `Welcome back ${user.fullname}`,
             user,
             success: true
