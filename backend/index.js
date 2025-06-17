@@ -41,12 +41,23 @@ const corsOptions = {
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Content-Disposition'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Content-Disposition', 'X-Requested-With'],
     exposedHeaders: ['Set-Cookie'],
-    maxAge: 86400 // 24 hours
+    maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }
 
 app.use(cors(corsOptions));
+
+// Add additional headers middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Cookie');
+    next();
+});
 
 const PORT = process.env.PORT || 4001;
 
