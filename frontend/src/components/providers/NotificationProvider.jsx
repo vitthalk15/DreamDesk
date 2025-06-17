@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Toaster } from '../ui/sonner'
 
@@ -15,22 +15,28 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
   const [actionHistory, setActionHistory] = useState([])
+  const initialized = useRef(false)
 
   // Load action history from localStorage on mount
   useEffect(() => {
-    const savedActions = localStorage.getItem('actionHistory')
-    if (savedActions) {
-      try {
-        setActionHistory(JSON.parse(savedActions))
-      } catch (error) {
-        console.error('Failed to parse action history:', error)
+    if (!initialized.current) {
+      const savedActions = localStorage.getItem('actionHistory')
+      if (savedActions) {
+        try {
+          setActionHistory(JSON.parse(savedActions))
+        } catch (error) {
+          console.error('Failed to parse action history:', error)
+        }
       }
+      initialized.current = true
     }
   }, [])
 
   // Save action history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('actionHistory', JSON.stringify(actionHistory))
+    if (initialized.current) {
+      localStorage.setItem('actionHistory', JSON.stringify(actionHistory))
+    }
   }, [actionHistory])
 
   const addNotification = useCallback((message, type = 'info', duration = 5000, actionId = null) => {
@@ -302,31 +308,31 @@ export const NotificationProvider = ({ children }) => {
 
   const showSuccess = useCallback((message, action = null, additionalData = {}) => {
     toast.success(message)
-    if (action) {
+    if (action && initialized.current) {
       trackAction(action, additionalData)
     }
-  }, [trackAction])
+  }, [])
 
   const showError = useCallback((message, action = null, additionalData = {}) => {
     toast.error(message)
-    if (action) {
+    if (action && initialized.current) {
       trackAction(action, additionalData)
     }
-  }, [trackAction])
+  }, [])
 
   const showInfo = useCallback((message, action = null, additionalData = {}) => {
     toast.info(message)
-    if (action) {
+    if (action && initialized.current) {
       trackAction(action, additionalData)
     }
-  }, [trackAction])
+  }, [])
 
   const showWarning = useCallback((message, action = null, additionalData = {}) => {
     toast.warning(message)
-    if (action) {
+    if (action && initialized.current) {
       trackAction(action, additionalData)
     }
-  }, [trackAction])
+  }, [])
 
   const getUnreadCount = useCallback(() => {
     return actionHistory.filter(action => !action.read).length
@@ -364,9 +370,11 @@ export const NotificationProvider = ({ children }) => {
   }
 
   return (
-    <NotificationContext.Provider value={value}>
-      {children}
+    <>
+      <NotificationContext.Provider value={value}>
+        {children}
+      </NotificationContext.Provider>
       <Toaster position="top-right" />
-    </NotificationContext.Provider>
+    </>
   )
 } 

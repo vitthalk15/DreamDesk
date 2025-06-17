@@ -38,9 +38,10 @@ const corsOptions = {
         'https://dreamdesk.vercel.app'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Content-Disposition'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400 // 24 hours
 }
 
 app.use(cors(corsOptions));

@@ -23,12 +23,20 @@ const RoleSwitch = () => {
             return;
         }
 
+        if (selectedRole === user?.role) {
+            showError('You are already in this role', 'same_role_error');
+            return;
+        }
+
         try {
             setLoading(true);
-            const res = await axios.patch(`${USER_API_END_POINT}/profile/role`, {
+            const res = await axios.post(`${USER_API_END_POINT}/role/switch`, {
                 newRole: selectedRole
             }, {
-                withCredentials: true
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             });
 
             if (res.data.success) {
@@ -42,8 +50,11 @@ const RoleSwitch = () => {
                 setSelectedRole(null);
             }
         } catch (error) {
-            console.log(error);
-            showError(error.response?.data?.message || 'Failed to switch role', 'role_switch_error');
+            console.error('Role switch error:', error);
+            showError(
+                error.response?.data?.message || 'Failed to switch role. Please try again.',
+                'role_switch_error'
+            );
         } finally {
             setLoading(false);
         }

@@ -213,26 +213,52 @@ export const updateProfile = async (req, res) => {
         // Handle resume file upload
         if (req.files && req.files.file && req.files.file[0]) {
             try {
-                const fileUri = getDataUri(req.files.file[0]);
+                const file = req.files.file[0];
+                
+                // Validate file type
+                if (!file.mimetype.includes('pdf')) {
+                    return res.status(400).json({
+                        message: "Only PDF files are allowed",
+                        success: false
+                    });
+                }
+
+                // Validate file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    return res.status(400).json({
+                        message: "File size should be less than 5MB",
+                        success: false
+                    });
+                }
+
+                const fileUri = getDataUri(file);
                 
                 // Upload to cloudinary with specific folder and transformations
                 const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
                     folder: 'resumes',
-                    resource_type: 'auto',
+                    resource_type: 'raw',
+                    format: 'pdf',
+                    access_mode: 'public',
+                    use_filename: true,
+                    unique_filename: true,
+                    overwrite: true,
+                    timestamp: Math.round((new Date).getTime()/1000),
                     transformation: [
-                        { quality: 'auto' }
+                        { fetch_format: 'pdf' }
                     ]
                 });
 
                 // Update resume information
                 user.profile.resume = cloudResponse.secure_url;
-                user.profile.resumeOriginalName = req.files.file[0].originalname;
-                user.profile.resumeSize = req.files.file[0].size;
+                user.profile.resumeOriginalName = file.originalname;
+                user.profile.resumeSize = file.size;
                 user.profile.resumeUploadedAt = new Date();
+
+                await user.save();
             } catch (uploadError) {
                 console.error('Resume upload error:', uploadError);
                 return res.status(500).json({
-                    message: "Failed to upload resume. Please try again.",
+                    message: uploadError.message || "Failed to upload resume. Please try again.",
                     success: false
                 });
             }
@@ -249,7 +275,8 @@ export const updateProfile = async (req, res) => {
                     transformation: [
                         { width: 400, height: 400, crop: 'fill' },
                         { quality: 'auto' }
-                    ]
+                    ],
+                    timestamp: Math.round((new Date).getTime()/1000)
                 });
 
                 // Update profile photo
@@ -470,3 +497,84 @@ export const resetPassword = async (req, res) => {
         });
     }
 }
+
+export const getResume = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        if (!user.profile.resume) {
+            return res.status(404).json({
+                message: "Resume not found",
+                success: false
+            });
+        }
+
+        // Extract public_id from URL
+        const urlParts = user.profile.resume.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const publicId = `resumes/${filename.split('.')[0]}`;
+
+        console.log('Fetching resume with public_id:', publicId);
+
+        try {
+            // Get the PDF from Cloudinary
+            const result = await cloudinary.uploader.download(publicId, {
+                resource_type: 'raw',
+                format: 'pdf'
+            });
+
+            if (!result) {
+                throw new Error('No data received from Cloudinary');
+            }
+
+            // Set appropriate headers
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${user.profile.resumeOriginalName || 'resume.pdf'}"`);
+            res.setHeader('Content-Length', result.length);
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            
+            // Send the PDF
+            res.send(result);
+        } catch (cloudinaryError) {
+            console.error('Cloudinary error:', cloudinaryError);
+            
+            // If Cloudinary fails, try to fetch the PDF directly from the URL
+            try {
+                const response = await fetch(user.profile.resume);
+                if (!response.ok) throw new Error('Failed to fetch PDF');
+                
+                const pdfBuffer = await response.buffer();
+                
+                // Set appropriate headers
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `inline; filename="${user.profile.resumeOriginalName || 'resume.pdf'}"`);
+                res.setHeader('Content-Length', pdfBuffer.length);
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                
+                // Send the PDF
+                res.send(pdfBuffer);
+            } catch (fetchError) {
+                console.error('Fetch error:', fetchError);
+                throw fetchError;
+            }
+        }
+    } catch (error) {
+        console.error('Resume fetch error:', error);
+        return res.status(500).json({
+            message: "Failed to fetch resume. Please try again.",
+            success: false
+        });
+    }
+};
