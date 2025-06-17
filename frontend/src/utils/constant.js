@@ -13,6 +13,25 @@ axios.defaults.headers.common['Content-Type'] = 'application/json';
 axios.defaults.headers.common['Accept'] = 'application/json';
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+// Add request interceptor to include credentials
+axios.interceptors.request.use(
+    config => {
+        // Get token from cookie if available
+        const token = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('token='))
+            ?.split('=')[1];
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+
 // Add response interceptor to handle errors
 axios.interceptors.response.use(
     response => response,
@@ -20,6 +39,8 @@ axios.interceptors.response.use(
         if (error.response?.status === 401) {
             // Handle unauthorized error
             console.error('Authentication error:', error.response?.data);
+            // Optionally redirect to login page
+            // window.location.href = '/login';
         }
         return Promise.reject(error);
     }
